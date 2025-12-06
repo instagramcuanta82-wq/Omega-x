@@ -1,13 +1,17 @@
+import express from "express";
+import { createServer } from "http";
 import { WebSocketServer } from "ws";
 
-const wss = new WebSocketServer({ port: process.env.PORT || 3000 });
+const app = express();
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
 
-let waitingUser = null; // almacena usuario esperando
+let waitingUser = null;
 
 wss.on("connection", (ws) => {
   ws.partner = null;
 
-  // intentar emparejar
+  // Intentar emparejar
   if (waitingUser === null) {
     waitingUser = ws;
     ws.send(JSON.stringify({ type: "status", message: "Esperando a otro usuario..." }));
@@ -21,20 +25,25 @@ wss.on("connection", (ws) => {
     waitingUser = null;
   }
 
-  // mensaje enviado por usuario
+  // Cuando recibe mensaje
   ws.on("message", (msg) => {
     if (ws.partner) {
       ws.partner.send(JSON.stringify({ type: "message", message: msg.toString() }));
     }
   });
 
-  // desconexión
+  // Desconexión
   ws.on("close", () => {
     if (waitingUser === ws) waitingUser = null;
-
     if (ws.partner) {
       ws.partner.send(JSON.stringify({ type: "status", message: "El otro usuario se desconectó." }));
       ws.partner.partner = null;
     }
   });
+});
+
+// Render necesita esto:
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("Servidor WebSocket activo en puerto", PORT);
 });
