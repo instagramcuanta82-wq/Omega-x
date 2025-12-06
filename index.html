@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Omegle X</title>
+<style>
+    body {
+        background: #111;
+        color: white;
+        font-family: Arial;
+        text-align: center;
+        padding: 30px;
+    }
+    #chat {
+        width: 90%;
+        max-width: 500px;
+        height: 300px;
+        border: 2px solid #444;
+        margin: 0 auto;
+        padding: 10px;
+        background: #000;
+        overflow-y: auto;
+    }
+    input {
+        width: 90%;
+        max-width: 500px;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: none;
+    }
+</style>
+</head>
+<body>
+
+<h2>Omegle X</h2>
+<div id="chat"></div>
+
+<input id="msg" placeholder="Escribe un mensaje...">
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("msg");
+
+const socket = new WebSocket("wss://TU-SERVIDOR.onrender.com");
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "status") {
+        chat.innerHTML += `<p><em>${data.message}</em></p>`;
+    } else if (data.type === "message") {
+        chat.innerHTML += `<p><b>Stranger:</b> ${data.message}</p>`;
+    }
+    chat.scrollTop = chat.scrollHeight;
+};
+
+input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        socket.send(input.value);
+        chat.innerHTML += `<p><b>You:</b> ${input.value}</p>`;
+        input.value = "";
+        chat.scrollTop = chat.scrollHeight;
+    }
+});
+</script>
+
+</body>
+</html>
